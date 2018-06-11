@@ -1,3 +1,5 @@
+pragma solidity ^0.4.8;
+
 // 소유자 관리용 계약
 contract Owned {
     // 상태 변수
