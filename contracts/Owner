@@ -1,0 +1,96 @@
+// 소유자 관리용 계약
+contract Owned {
+    // 상태 변수
+    address public owner; // 소유자 주소
+
+    // 소유자 변경 시 이벤트
+    event TransferOwnership(address oldaddr, address newaddr);
+
+    // 소유자 한정 메서드용 수식자
+    modifier onlyOwner() { if (msg.sender != owner) throw; _; }
+
+    // 생성자
+    function Owned() {
+        owner = msg.sender; // 처음에 계약을 생성한 주소를 소유자로 한다
+    }
+    
+    //  소유자 변경
+    function transferOwnership(address _new) onlyOwner {
+        address oldaddr = owner;
+        owner = _new;
+        TransferOwnership(oldaddr, owner);
+    }
+}
+
+
+contract OreOreCoin is Owned{
+    // 상태 변수 선언
+    string public name; // 토큰 이름
+    string public symbol; // 토큰 단위
+    uint8 public decimals; // 소수점 이하 자릿수
+    uint256 public totalSupply; // 토큰 총량
+    mapping (address => uint256) public balanceOf; // 각 주소의 잔고
+    mapping (address => int8) public blackList; // 블랙리스트
+    mapping (address => Members) public members; // 각 주소의 회원 정보
+     
+    // 이벤트 알림
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Blacklisted(address indexed target);
+    event DeleteFromBlacklist(address indexed target);
+    event RejectedPaymentToBlacklistedAddr(address indexed from, address indexed to, uint256 value);
+    event RejectedPaymentFromBlacklistedAddr(address indexed from, address indexed to, uint256 value);
+    event Cashback(address indexed from, address indexed to, uint256 value);
+     
+    // 생성자
+    function OreOreCoin(uint256 _supply, string _name, string _symbol, uint8 _decimals) {
+        balanceOf[msg.sender] = _supply;
+        name = _name;
+        symbol = _symbol;
+        decimals = _decimals;
+        totalSupply = _supply;
+    }
+ 
+    // 주소를 블랙리스트에 등록
+    function blacklisting(address _addr) onlyOwner {
+        blackList[_addr] = 1;
+        Blacklisted(_addr);
+    }
+ 
+    // 주소를 블랙리스트에서 해제
+    function deleteFromBlacklist(address _addr) onlyOwner {
+        blackList[_addr] = -1;
+        DeleteFromBlacklist(_addr);
+    }
+ 
+    // 회원 관리 계약 설정
+    function setMembers(Members _members) {
+        members[msg.sender] = Members(_members);
+    }
+ 
+    // 송금
+    function transfer(address _to, uint256 _value) {
+        // 부정 송금 확인
+        if (balanceOf[msg.sender] < _value) throw;
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw;
+
+        // 블랙리스트에 존재하는 계정은 입출금 불가
+        if (blackList[msg.sender] > 0) {
+            RejectedPaymentFromBlacklistedAddr(msg.sender, _to, _value);
+        } else if (blackList[_to] > 0) {
+            RejectedPaymentToBlacklistedAddr(msg.sender, _to, _value);
+        } else {
+            //  캐시백 금액을 계산(각 대상의 비율을 사용)
+            uint256 cashback = 0;
+            if(members[_to] > address(0)) {
+                cashback = _value / 100 * uint256(members[_to].getCashbackRate(msg.sender));
+                members[_to].updateHistory(msg.sender, _value);
+            }
+ 
+            balanceOf[msg.sender] -= (_value - cashback);
+            balanceOf[_to] += (_value - cashback);
+ 
+            Transfer(msg.sender, _to, _value);
+            Cashback(_to, msg.sender, cashback);
+        }
+    }
+}
