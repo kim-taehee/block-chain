@@ -23,7 +23,7 @@ contract Owned {
 }
 
 
-contract OreOreCoin is Owned{
+contract DanceCoin is Owned{
     // 상태 변수 선언
     string public name; // 토큰 이름
     string public symbol; // 토큰 단위
