@@ -1,3 +1,5 @@
+pragma solidity ^0.4.8;
+
 contract Escrow is Owned {
     //  상태 변수
     OreOreCoin public token; // 토큰
