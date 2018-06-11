@@ -7,7 +7,7 @@ import 'node_modules/zeppelin-solidity/contracts/math/SafeMath.sol';
 import 'node_modules/zeppelin-solidity/contracts/lifecycle/Pausable.sol';
 
 
-contract NPERToken is ERC20, Ownable, Pausable {
+contract DanceToken is ERC20, Ownable, Pausable {
 
     using SafeMath for uint256;
 
@@ -21,7 +21,7 @@ contract NPERToken is ERC20, Ownable, Pausable {
     mapping(address => bool) internal locks;
     mapping(address => mapping(address => uint256)) internal allowed;
 
-    function NPERToken() public {
+    function DanceToken() public {
         name = "DanceCoin";
         symbol = "DanceCoin";
         decimals = 18;
